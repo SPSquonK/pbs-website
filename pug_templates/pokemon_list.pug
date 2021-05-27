@@ -1,0 +1,12 @@
+table
+  tr
+    th Name
+    th Type
+    th Ability
+    th Moves
+  each pokemon in pokemonList
+    tr
+      td #{pokemon.getName()}
+      td #{pokemon.getTypes().join(" / ")}
+      td #{pokemon.getAbilities().join(" / ")}
+      td #{pokemon.getMoves().join(", ")}
