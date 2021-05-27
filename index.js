@@ -6,7 +6,7 @@ const port = typeof(PhusionPassenger) !== 'undefined' ? 'passenger' : 3000;
 
 const pokemons = require('./pokemon.js');
 
-const pkmn = fs.readFileSync("resource/pokemon.txt", "utf-8").split(/\r?\n/);
+const pkmn = fs.readFileSync("resource/pokemon.txt", "utf-8").replace(/^\uFEFF/, '').split(/\r?\n/).filter(s => s != '');
 const pokedex = pokemons.makePokedex(pkmn);
 
 
