@@ -54,7 +54,7 @@ const templates = {
 app.get("/", (_, res) => {
     return res.send(
         templates.pokemonList({
-            pokemonList: pokedex.byNames()
+            pokemonList: pokedex.all()
         })
     );
 });

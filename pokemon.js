@@ -102,19 +102,34 @@ class Pokemon {
 }
 
 const PokedexH = {
+    /* Teach TM moves + run the evolution closure */
+    completeMoves: function(pokemonsMapping, tmContent) {
+        const movesToTeach = PokedexH.tmContentToTodoList(tmContent);
+
+        for (const [pokemonInternalName, moves] of Object.entries(movesToTeach)) {
+            pokemonsMapping.name[pokemonInternalName].learnMoves(moves);
+        }
+
+        PokedexH.learnPreevolutionMoves(pokemonsMapping.byNames());
+    },
+
     learnPreevolutionMoves: function(pokemons) {
+        // Find evolutions
         let evolutions = {}; // id evolves into => list
 
         for (const [id, pkmn] of Object.entries(pokemons)) {
-            evolutions[id] = pkmn.getEvolutions().map(id => {
-                let r = Object.values(pokemons).find(pkmn => pkmn.getId() === id)
-                if (r === undefined) console.error("Noone is named " + id);
+            evolutions[id] = pkmn.getEvolutions().map(evoId => {
+                let r = pokemons[evoId]
+                if (r === undefined) {
+                    console.error(pokemons);
+                    throw Error("Noone is named " + evoId);
+                }
                 return r;
             });
         }
 
+        // Closure
         let stable;
-
         do {
             stable = true;
 
@@ -122,18 +137,44 @@ const PokedexH = {
                 let myMoves = pokemons[preevolutionId].getMoves();
 
                 for (const evolution of myEvolutions) {
-                    
                     const before = evolution.getMoves().length;
                     evolution.learnMoves(myMoves);
                     const after = evolution.getMoves().length;
                     if (after !== before) stable = false;
                 }
-
             }
 
-
         } while (!stable);
+    },
+
+    tmContentToTodoList: function (tmContent) {
+        const lines = tmContent.split("\n");
+
+        const movesToTeach = {};
+
+        let currentMove = undefined;
+        for (const line of lines) {
+            if (line.startsWith("[") && line.endsWith("]")) {
+                currentMove = line.substr(1, line.length - 2);
+            } else {
+                if (currentMove === undefined)
+                    throw Error("Invalid tm.txt file");
+                
+                line.split(",")
+                    .filter(s => s !== '')
+                    .forEach(pokemonInternalName => {
+                        if (movesToTeach[pokemonInternalName] === undefined) {
+                            movesToTeach[pokemonInternalName] = [];
+                        }
+
+                        movesToTeach[pokemonInternalName].push(currentMove);
+                    });
+            }
+        }
+
+        return movesToTeach;
     }
+
 };
 
 
@@ -184,8 +225,6 @@ class Ability {
     }
 }
 
-
-
 class Mappings {
     static fromCSV(name, csvContent, csvLineToObject) {
         const parsingResult = Papa.parse(csvContent);
@@ -218,8 +257,14 @@ class Mappings {
                 this[key][objectKey[key]] = object;
             }
 
-            this["by" + capitalize(key) + "s"] = () => Object.values(this[key]);
+            this["by" + capitalize(key) + "s"] = () => this[key];
         }
+
+        this.firstKey = keys[0];
+    }
+
+    all() {
+        return Object.values(this[this.firstKey]);
     }
 }
 
@@ -230,6 +275,9 @@ class PBS {
         this._items = Mappings.fromCSV("Items", pbsDict.items, Item.readFromCsv);
         this._abilities = Mappings.fromCSV("Abilities", pbsDict.abilities, Ability.readFromCsv);
         this._pokemons = Mappings.fromIni("Pokemons", pbsDict.pokemon, Pokemon.readFromInitialIni);
+        PokedexH.completeMoves(this._pokemons, pbsDict.tm);
+
+
         // TODO: learn all moves
     }
 
