@@ -46,138 +46,6 @@ const PkmnH = {
 
 }
 
-
-class Pokemon {
-    static readFromInitialIni(iniKey, entries) {
-        return [
-            {
-                id: parseInt(iniKey),
-                name: entries.InternalName
-            },
-            new Pokemon(iniKey, entries)
-        ];
-    }
-
-    constructor(id, entries) {
-        this._id = id;
-        this._entries = entries;
-        this._abilities = PkmnH.makeAbilities(entries.Abilities, entries.HiddenAbility);
-        this._moves = PkmnH.makeMoves({
-            learned: entries.Moves,
-            other: [entries.EggMoves]
-        });
-
-    }
-
-    getName() { return this._entries.Name; }
-    getId() { return this._entries.InternalName; }
-    getTypes() {
-        let types = [];
-        if (this._entries.Type1 !== undefined) types.push(this._entries.Type1);
-        if (this._entries.Type2 !== undefined) types.push(this._entries.Type2);
-        return types;
-    }
-
-    getMoves() { return [...this._moves]; }
-
-    getAbilities() { return this._abilities; }
-
-    getEvolutions() {
-        if (this._entries.Evolutions === undefined) return [];
-        if (this._entries.Evolutions === "") return [];
-        let s = this._entries.Evolutions.split(",");
-
-        let result = [];
-        for (let i = 0 ; i < s.length ; i += 3) {
-            result.push(s[i]);
-        }
-        return result;
-        
-    }
-    
-    learnMoves(newMoves) {
-        newMoves.forEach(move => this._moves.add(move));
-    }
-
-}
-
-const PokedexH = {
-    /* Teach TM moves + run the evolution closure */
-    completeMoves: function(pokemonsMapping, tmContent) {
-        const movesToTeach = PokedexH.tmContentToTodoList(tmContent);
-
-        for (const [pokemonInternalName, moves] of Object.entries(movesToTeach)) {
-            pokemonsMapping.name[pokemonInternalName].learnMoves(moves);
-        }
-
-        PokedexH.learnPreevolutionMoves(pokemonsMapping.byNames());
-    },
-
-    learnPreevolutionMoves: function(pokemons) {
-        // Find evolutions
-        let evolutions = {}; // id evolves into => list
-
-        for (const [id, pkmn] of Object.entries(pokemons)) {
-            evolutions[id] = pkmn.getEvolutions().map(evoId => {
-                let r = pokemons[evoId]
-                if (r === undefined) {
-                    console.error(pokemons);
-                    throw Error("Noone is named " + evoId);
-                }
-                return r;
-            });
-        }
-
-        // Closure
-        let stable;
-        do {
-            stable = true;
-
-            for (const [preevolutionId, myEvolutions] of Object.entries(evolutions)) {
-                let myMoves = pokemons[preevolutionId].getMoves();
-
-                for (const evolution of myEvolutions) {
-                    const before = evolution.getMoves().length;
-                    evolution.learnMoves(myMoves);
-                    const after = evolution.getMoves().length;
-                    if (after !== before) stable = false;
-                }
-            }
-
-        } while (!stable);
-    },
-
-    tmContentToTodoList: function (tmContent) {
-        const lines = tmContent.split("\n");
-
-        const movesToTeach = {};
-
-        let currentMove = undefined;
-        for (const line of lines) {
-            if (line.startsWith("[") && line.endsWith("]")) {
-                currentMove = line.substr(1, line.length - 2);
-            } else {
-                if (currentMove === undefined)
-                    throw Error("Invalid tm.txt file");
-                
-                line.split(",")
-                    .filter(s => s !== '')
-                    .forEach(pokemonInternalName => {
-                        if (movesToTeach[pokemonInternalName] === undefined) {
-                            movesToTeach[pokemonInternalName] = [];
-                        }
-
-                        movesToTeach[pokemonInternalName].push(currentMove);
-                    });
-            }
-        }
-
-        return movesToTeach;
-    }
-
-};
-
-
 class Move {
     static readFromCsv(csvLine) {
         const key = {
@@ -236,7 +104,6 @@ class Mappings {
     
         const objects = parsingResult.data.map(csvLineToObject)
         return new Mappings(name, objects);
-
     }
 
     static fromIni(name, iniContent, iniDictToObject) {
@@ -261,24 +128,198 @@ class Mappings {
         }
 
         this.firstKey = keys[0];
+
+        this.objs = objects;
     }
 
     all() {
         return Object.values(this[this.firstKey]);
     }
+
+    convert(predicate) {
+        return new Mappings(
+            this.name,
+            this.objs.map(obj => [obj[0], predicate(obj[1])])
+        )
+    }
 }
 
+
+class Pokemon {
+    constructor(tempPokemon, moves, abilities) {
+        this.name = tempPokemon._entries.Name;
+        this.id   = tempPokemon._entries.InternalName;
+        this.types = tempPokemon.types;
+        this.moves     = [...tempPokemon.moves]    .map(move    => moves.name[move]);
+        this.abilities = [...tempPokemon.abilities].map(ability => abilities.name[ability]);
+        this.hp  = tempPokemon.stats.hp;
+        this.att = tempPokemon.stats.att;
+        this.def = tempPokemon.stats.def;
+        this.spa = tempPokemon.stats.spa;
+        this.spd = tempPokemon.stats.spd;
+        this.spe = tempPokemon.stats.spe;
+
+        Object.freeze(this);
+    }
+}
+
+class _PokemonsBuilderPokemon {
+    static readFromInitialIni(iniKey, entries) {
+        return [
+            {
+                id: parseInt(iniKey),
+                name: entries.InternalName
+            },
+            new _PokemonsBuilderPokemon(iniKey, entries)
+        ];
+    }
+
+    static makeTypes(entries) {
+        let types = [];
+        if (entries.Type1 !== undefined) types.push(entries.Type1);
+        if (entries.Type2 !== undefined) types.push(entries.Type2);
+        return types;
+    }
+
+    constructor(iniKey, entries) {
+        this._id = iniKey;
+        this._entries = entries;
+
+        this.abilities = PkmnH.makeAbilities(entries.Abilities, entries.HiddenAbility);
+        this.moves = PkmnH.makeMoves({
+            learned: entries.Moves, other: [entries.EggMoves]
+        });
+
+        const stats = entries.BaseStats.split(",");
+        this.stats = {
+            hp: parseInt(stats[0]),
+            att: parseInt(stats[1]),
+            def: parseInt(stats[2]),
+            spa: parseInt(stats[4]),
+            spd: parseInt(stats[5]),
+            spe: parseInt(stats[3])
+        };
+
+        this.types = _PokemonsBuilderPokemon.makeTypes(entries);
+    }
+
+    determineEvolutions(pokemonListByNames) {
+        if (this._entries.Evolutions === undefined || this._entries.Evolutions === "") {
+            this.evolutions = [];
+            return;
+        }
+        
+        let s = this._entries.Evolutions.split(",");
+
+        let result = [];
+        for (let i = 0 ; i < s.length ; i += 3) {
+            result.push(s[i]);
+        }
+
+        let pkmn = result.map(id => pokemonListByNames[id]);
+        if (pkmn.some(pkmn => pkmn === undefined)) throw Error(":(");
+        this.evolutions = pkmn;
+    }
+
+    learnMoves(moveList) {
+        moveList.forEach(move => this.moves.add(move));
+    }
+
+
+}
+
+class PokemonsBuilder {
+    static /* PokemonsBuilder */ initializeFromIni(iniContent) {
+        let builder = new PokemonsBuilder();
+        
+        builder._ = Mappings.fromIni(
+            "pokemons", iniContent, _PokemonsBuilderPokemon.readFromInitialIni
+        );
+
+        return builder;
+    }
+
+    static tmContentToTodoList(tmContent) {
+        const lines = tmContent.split("\n");
+
+        const movesToTeach = {};
+
+        let currentMove = undefined;
+        for (const line of lines) {
+            if (line.startsWith("[") && line.endsWith("]")) {
+                currentMove = line.substr(1, line.length - 2);
+            } else {
+                if (currentMove === undefined)
+                    throw Error("Invalid tm.txt file");
+                
+                line.split(",")
+                    .filter(s => s !== '')
+                    .forEach(pokemonInternalName => {
+                        if (movesToTeach[pokemonInternalName] === undefined) {
+                            movesToTeach[pokemonInternalName] = [];
+                        }
+
+                        movesToTeach[pokemonInternalName].push(currentMove);
+                    });
+            }
+        }
+
+        return movesToTeach;
+    }
+
+    addMoves(documentType, content) {
+        if (documentType == "tms") {
+            const movesToTeach = PokemonsBuilder.tmContentToTodoList(content);
+
+            for (const [pokemonInternalName, moves] of Object.entries(movesToTeach)) {
+                this._.name[pokemonInternalName].learnMoves(moves);
+            }
+        } else {
+            throw Error("Unknown move type " + documentType);
+        }
+
+        return this;
+    }
+
+    applyEvolutionClosure() {
+        const allByNames = this._.byNames();
+        this._.all().forEach(pokemon => pokemon.determineEvolutions(allByNames));
+
+        let stable;
+        do {
+            stable = true;
+
+            for (const pokemon of this._.all()) {
+                let myMoves = pokemon.moves;
+
+                for (const evolution of pokemon.evolutions) {
+                    const before = evolution.moves.size;
+                    evolution.moves.add(...myMoves);
+                    const after = evolution.moves.size;
+                    if (before !== after) stable = false;
+                }
+            }
+
+        } while (!stable);
+
+        return this;
+    }
+
+    getPokemons(moves, abilities) {
+        return this._.convert(tempPkmn => new Pokemon(tempPkmn, moves, abilities));
+    }
+}
 
 class PBS {
     constructor(pbsDict) {
         this._moves = Mappings.fromCSV("Moves", pbsDict.moves, Move.readFromCsv);
         this._items = Mappings.fromCSV("Items", pbsDict.items, Item.readFromCsv);
         this._abilities = Mappings.fromCSV("Abilities", pbsDict.abilities, Ability.readFromCsv);
-        this._pokemons = Mappings.fromIni("Pokemons", pbsDict.pokemon, Pokemon.readFromInitialIni);
-        PokedexH.completeMoves(this._pokemons, pbsDict.tm);
 
-
-        // TODO: learn all moves
+        this._pokemons = PokemonsBuilder.initializeFromIni(pbsDict.pokemon)
+            .addMoves("tms", pbsDict.tm)
+            .applyEvolutionClosure()
+            .getPokemons(this._moves, this._abilities);
     }
 
     getPokedex() { return this._pokemons; }

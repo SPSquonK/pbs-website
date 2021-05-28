@@ -2,11 +2,23 @@ table
   tr
     th Name
     th Type
+    th HP
+    th Att
+    th Def
+    th SpA
+    th SpD
+    th Spe
     th Ability
     th Moves
   each pokemon in pokemonList
     tr
-      td #{pokemon.getName()}
-      td #{pokemon.getTypes().join(" / ")}
-      td #{pokemon.getAbilities().join(" / ")}
-      td #{pokemon.getMoves().join(", ")}
+      td #{pokemon.name}
+      td #{pokemon.types.join(" / ")}
+      td #{pokemon.hp}
+      td #{pokemon.att}
+      td #{pokemon.def}
+      td #{pokemon.spa}
+      td #{pokemon.spd}
+      td #{pokemon.spe}
+      td #{pokemon.abilities.map(a => a.name).join(" / ")}
+      td #{pokemon.moves.map(m => m.name).join(", ")}
