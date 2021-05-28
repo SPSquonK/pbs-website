@@ -1,4 +1,11 @@
+const Papa = require('papaparse');
+const ini = require('ini');
 
+const capitalize = (s) => {
+    if (typeof s !== 'string') return ''
+    return s.charAt(0).toUpperCase() + s.slice(1);
+}
+  
 
 const PkmnH = {
     makeAbilities: function(regular, hidden) {
@@ -41,6 +48,16 @@ const PkmnH = {
 
 
 class Pokemon {
+    static readFromInitialIni(iniKey, entries) {
+        return [
+            {
+                id: parseInt(iniKey),
+                name: entries.InternalName
+            },
+            new Pokemon(iniKey, entries)
+        ];
+    }
+
     constructor(id, entries) {
         this._id = id;
         this._entries = entries;
@@ -119,66 +136,110 @@ const PokedexH = {
     }
 };
 
-class Pokedex {
-    constructor(keyValueDict) {
-        this.knownSpecies = {};
 
-        for (const { id, entries } of keyValueDict) {
-            this.knownSpecies[id] = new Pokemon(id, entries);
+class Move {
+    static readFromCsv(csvLine) {
+        const key = {
+            id: parseInt(csvLine[0]),
+            name: csvLine[1]
         }
 
-        PokedexH.learnPreevolutionMoves(this.knownSpecies);
+        return [key, new Move(csvLine)];
     }
 
-    getPokemonById(name) {
-        return Object.values(this.knownSpecies)
-            .find(pokemon => pokemon.getId() == name);
+    constructor(csvLine) {
+        this.name = csvLine[2];
+    }
+}
+
+class Item {
+    static readFromCsv(csvLine) {
+        return [
+            {
+                id: parseInt(csvLine[0]),
+                name: csvLine[1]
+            },
+            new Item(csvLine)
+        ]
     }
 
-    getListOfAllPokemon() {
-        return Object.values(this.knownSpecies);
+    constructor(csvLine) {
+        this.name = csvLine[2];
+    }
+}
+
+class Ability {
+    static readFromCsv(csvLine) {
+        return [
+            {
+                id: parseInt(csvLine[0]),
+                name: csvLine[1]
+            },
+            new Ability(csvLine)
+        ];
     }
 
-
+    constructor(csvLine) {
+        this.name = csvLine[2];
+    }
 }
 
 
-function makePokedex(lines) {
-    let splitted = lines.reduce((previous, currentLine) => {
-        if (currentLine.startsWith("#")) return previous;
 
-        if (currentLine.startsWith("[") && currentLine.endsWith("]")) {
-            let current = {
-                id: currentLine.substr(1, currentLine.length - 2),
-                entries: {}
-            };
-
-            previous.groups.push(current);
-            previous.current = current;
-            return previous;
+class Mappings {
+    static fromCSV(name, csvContent, csvLineToObject) {
+        const parsingResult = Papa.parse(csvContent);
+    
+        if (parsingResult.errors.length !== 0) {
+            console.error(parsingResult.errors);
+            throw Error("Failed csv content to mapping " + name);
         }
+    
+        const objects = parsingResult.data.map(csvLineToObject)
+        return new Mappings(name, objects);
 
-        const equalsPosition = currentLine.search("=");
-        if (equalsPosition === -1) throw Error("Invalid file");
+    }
 
-        const key = currentLine.substr(0, equalsPosition);
-        const value = currentLine.substr(equalsPosition + 1);
+    static fromIni(name, iniContent, iniDictToObject) {
+        const parsing = ini.parse(iniContent);
+        const objects = Object.entries(parsing).map(entry => iniDictToObject(entry[0], entry[1]));
+        return new Mappings(name, objects);
+    }
 
-        if (previous.current.entries[key] !== undefined) {
-            throw Error(previous.current.id + " has two " + key);
+    constructor(name, objects) {
+        if (objects.length === 0) throw Error(`Mapping ${name} is empty`);
+        this.name = name;
+
+        const keys = Object.keys(objects[0][0]);
+        for (const key of keys) {
+            this[key] = {};
+
+            for (const [objectKey, object] of objects) {
+                this[key][objectKey[key]] = object;
+            }
+
+            this["by" + capitalize(key) + "s"] = () => Object.values(this[key]);
         }
+    }
+}
 
-        previous.current.entries[key] = value;
 
-        return previous;
-        }, { groups: [], current: undefined }
-    );
+class PBS {
+    constructor(pbsDict) {
+        this._moves = Mappings.fromCSV("Moves", pbsDict.moves, Move.readFromCsv);
+        this._items = Mappings.fromCSV("Items", pbsDict.items, Item.readFromCsv);
+        this._abilities = Mappings.fromCSV("Abilities", pbsDict.abilities, Ability.readFromCsv);
+        this._pokemons = Mappings.fromIni("Pokemons", pbsDict.pokemon, Pokemon.readFromInitialIni);
+        // TODO: learn all moves
+    }
 
-    return new Pokedex(splitted.groups);
+    getPokedex() { return this._pokemons; }
+
+
 }
 
 
 module.exports = {
     Pokemon,
-    makePokedex
+    PBS
 };

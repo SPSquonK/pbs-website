@@ -6,8 +6,38 @@ const port = typeof(PhusionPassenger) !== 'undefined' ? 'passenger' : 3000;
 
 const pokemons = require('./pokemon.js');
 
-const pkmn = fs.readFileSync("resource/pokemon.txt", "utf-8").replace(/^\uFEFF/, '').split(/\r?\n/).filter(s => s != '');
-const pokedex = pokemons.makePokedex(pkmn);
+function pbsFilePathToLines(path) {
+    return fs.readFileSync(path, "utf-8")
+        // Remove BOM
+        .replace(/^\uFEFF/, '')
+        // Split
+        .split(/\r?\n/)
+        // Remove empty lines and comments
+        .filter(s => s != '' && !s.startsWith("#"))
+        // As we are using libraries to parse the content, we rebuild an unique
+        // string
+        .join("\n");
+}
+
+function buildPbsReading() {
+    const listOfFiles = [
+        'abilities', 'encounters', 'items', 'moves',
+        'pokemon', 'pokemonforms', 'tm', 'types'
+    ];
+
+    const result = {};
+
+    for (let filename of listOfFiles) {
+        result[filename] = pbsFilePathToLines('resource/' + filename + ".txt");
+    }
+
+    return result;
+}
+
+
+const pbs = new pokemons.PBS(buildPbsReading());
+
+const pokedex = pbs.getPokedex();
 
 
 const app = express();
@@ -24,7 +54,7 @@ const templates = {
 app.get("/", (_, res) => {
     return res.send(
         templates.pokemonList({
-            pokemonList: pokedex.getListOfAllPokemon()
+            pokemonList: pokedex.byNames()
         })
     );
 });
