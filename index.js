@@ -45,6 +45,7 @@ const app = express();
 app.listen(port, () => console.log("Server started on http://localhost:" + port + "/"));
 
 const templates = {
+    main: pug.compileFile("pug_templates/main.pug"),
     pokemonList: pug.compileFile("pug_templates/pokemon_list.pug")
 
 };
@@ -53,8 +54,10 @@ const templates = {
 
 app.get("/", (_, res) => {
     return res.send(
-        templates.pokemonList({
-            pokemonList: pokedex.all()
+        templates.main({ content : 
+            templates.pokemonList({
+                pokemonList: pokedex.all()
+            })
         })
     );
 });

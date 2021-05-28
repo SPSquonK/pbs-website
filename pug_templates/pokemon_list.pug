@@ -1,4 +1,4 @@
-table
+table(class="table is-striped is-hoverable is-bordered")
   tr
     th Name
     th Type
@@ -13,12 +13,12 @@ table
   each pokemon in pokemonList
     tr
       td #{pokemon.name}
-      td #{pokemon.types.join(" / ")}
+      td !{pokemon.types.join("<br />")}
       td #{pokemon.hp}
       td #{pokemon.att}
       td #{pokemon.def}
       td #{pokemon.spa}
       td #{pokemon.spd}
       td #{pokemon.spe}
-      td #{pokemon.abilities.map(a => a.name).join(" / ")}
+      td !{pokemon.abilities.map(a => a.name).join("<br />")}
       td #{pokemon.moves.map(m => m.name).join(", ")}
