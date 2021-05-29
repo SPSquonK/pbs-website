@@ -58,6 +58,26 @@ class Move {
 
     constructor(csvLine) {
         this.name = csvLine[2];
+        this.bp = parseInt(csvLine[4]);
+        this.type = csvLine[5];
+        this.side = csvLine[6];
+        this.precision = parseInt(csvLine[7]);
+        this.pp = parseInt(csvLine[8]);
+        this.description = csvLine[13];
+
+        this.tooltip =
+`Power: ${this.bp}
+Precision: ${this.precision}
+Type: ${this.type}
+Side: ${this.side}
+PP: ${this.pp}
+
+${this.description}
+`;
+    }
+
+    makeTooltip() {
+        return this.tooltip;
     }
 }
 
@@ -90,6 +110,11 @@ class Ability {
 
     constructor(csvLine) {
         this.name = csvLine[2];
+        this.description = csvLine[3];
+    }
+
+    makeTooltip() {
+        return this.description;
     }
 }
 
