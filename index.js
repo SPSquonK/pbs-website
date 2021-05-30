@@ -56,7 +56,7 @@ app.get("/", (_, res) => {
     return res.send(
         templates.main({ content : 
             templates.pokemonList({
-                pokemonList: pokedex.all()
+                pokemonList: Object.values(pokedex).slice(0, 10)
             })
         })
     );

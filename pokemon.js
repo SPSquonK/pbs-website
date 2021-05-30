@@ -1,3 +1,5 @@
+const DatabaseBuilder = require('./database_builder.js');
+
 const Papa = require('papaparse');
 const ini = require('ini');
 
@@ -46,77 +48,17 @@ const PkmnH = {
 
 }
 
-class Move {
-    static readFromCsv(csvLine) {
-        const key = {
-            id: parseInt(csvLine[0]),
-            name: csvLine[1]
-        }
 
-        return [key, new Move(csvLine)];
-    }
-
-    constructor(csvLine) {
-        this.name = csvLine[2];
-        this.bp = parseInt(csvLine[4]);
-        this.type = csvLine[5];
-        this.side = csvLine[6];
-        this.precision = parseInt(csvLine[7]);
-        this.pp = parseInt(csvLine[8]);
-        this.description = csvLine[13];
-
-        this.tooltip =
-`Power: ${this.bp}
-Precision: ${this.precision}
-Type: ${this.type}
-Side: ${this.side}
-PP: ${this.pp}
-
-${this.description}
-`;
-    }
-
-    makeTooltip() {
-        return this.tooltip;
-    }
+function getMoveTooltip(move) {
+    return `Power: ${move.bp}`
+        + `Precision: ${move.precision}\n`
+        + `Type: ${move.type}\n`
+        + `Side: ${move.side}\n`
+        + `PP: ${move.pp}\n`
+        + `\n`
+        + `${move.description}`;
 }
 
-class Item {
-    static readFromCsv(csvLine) {
-        return [
-            {
-                id: parseInt(csvLine[0]),
-                name: csvLine[1]
-            },
-            new Item(csvLine)
-        ]
-    }
-
-    constructor(csvLine) {
-        this.name = csvLine[2];
-    }
-}
-
-class Ability {
-    static readFromCsv(csvLine) {
-        return [
-            {
-                id: parseInt(csvLine[0]),
-                name: csvLine[1]
-            },
-            new Ability(csvLine)
-        ];
-    }
-
-    constructor(csvLine) {
-        this.name = csvLine[2];
-        this.description = csvLine[3];
-    }
-
-    makeTooltip() {
-        return this.description;
-    }
-}
 
 class Mappings {
     static fromCSV(name, csvContent, csvLineToObject) {
@@ -172,17 +114,17 @@ class Mappings {
 
 class Pokemon {
     constructor(tempPokemon, moves, abilities) {
-        this.name = tempPokemon._entries.Name;
-        this.id   = tempPokemon._entries.InternalName;
+        this.name = tempPokemon.name;
+        this.id   = tempPokemon['@id'];
         this.types = tempPokemon.types;
-        this.moves     = [...tempPokemon.moves]    .map(move    => moves.name[move]);
-        this.abilities = [...tempPokemon.abilities].map(ability => abilities.name[ability]);
-        this.hp  = tempPokemon.stats.hp;
-        this.att = tempPokemon.stats.att;
-        this.def = tempPokemon.stats.def;
-        this.spa = tempPokemon.stats.spa;
-        this.spd = tempPokemon.stats.spd;
-        this.spe = tempPokemon.stats.spe;
+        this.moves     = Object.keys(tempPokemon.moves).map(move    => moves[move]);
+        this.abilities = [...tempPokemon.abilities].map(ability => abilities[ability]);
+        this.hp  = tempPokemon.hp;
+        this.att = tempPokemon.att;
+        this.def = tempPokemon.def;
+        this.spa = tempPokemon.spa;
+        this.spd = tempPokemon.spd;
+        this.spe = tempPokemon.spe;
 
         Object.freeze(this);
     }
@@ -254,14 +196,12 @@ class _PokemonsBuilderPokemon {
 }
 
 class PokemonsBuilder {
-    static /* PokemonsBuilder */ initializeFromIni(iniContent) {
-        let builder = new PokemonsBuilder();
-        
-        builder._ = Mappings.fromIni(
-            "pokemons", iniContent, _PokemonsBuilderPokemon.readFromInitialIni
-        );
+    static initializeFromIni(iniContent) {
+        return new PokemonsBuilder(DatabaseBuilder.readINIPokemon(iniContent));
+    }
 
-        return builder;
+    constructor(initialSet) {
+        this._ = initialSet;
     }
 
     static tmContentToTodoList(tmContent) {
@@ -292,36 +232,41 @@ class PokemonsBuilder {
         return movesToTeach;
     }
 
-    addMoves(documentType, content) {
-        if (documentType == "tms") {
-            const movesToTeach = PokemonsBuilder.tmContentToTodoList(content);
+    static teachMove(pokemon, name, method) {
+        if (pokemon.moves[name] === undefined) {
+            pokemon.moves[name] = [];
+        }
+        
+        pokemon.moves[name].push(method);
+    }
 
-            for (const [pokemonInternalName, moves] of Object.entries(movesToTeach)) {
-                this._.name[pokemonInternalName].learnMoves(moves);
-            }
-        } else {
-            throw Error("Unknown move type " + documentType);
+    addTMMoves(content) {
+        const movesToTeach = PokemonsBuilder.tmContentToTodoList(content);
+
+        for (const [pokemonInternalName, moves] of Object.entries(movesToTeach)) {
+            moves.forEach(move => PokemonsBuilder.teachMove(this._[pokemonInternalName], move, "TM"));
         }
 
         return this;
     }
 
     applyEvolutionClosure() {
-        const allByNames = this._.byNames();
-        this._.all().forEach(pokemon => pokemon.determineEvolutions(allByNames));
-
         let stable;
         do {
             stable = true;
 
-            for (const pokemon of this._.all()) {
-                let myMoves = pokemon.moves;
+            for (const pokemon of Object.values(this._)) {
+                let myMoves = Object.values(pokemon.moves);
 
-                for (const evolution of pokemon.evolutions) {
-                    const before = evolution.moves.size;
-                    evolution.moves.add(...myMoves);
-                    const after = evolution.moves.size;
-                    if (before !== after) stable = false;
+                for (const evolutionName of pokemon.evolvesInto) {
+                    const evolution = this._[evolutionName];
+
+                    myMoves.forEach(move => {
+                        if (evolution.moves[move] === undefined) {
+                            evolution.moves[move] = ["Preevolution"]
+                            stable = false;
+                        }
+                    })
                 }
             }
 
@@ -331,18 +276,26 @@ class PokemonsBuilder {
     }
 
     getPokemons(moves, abilities) {
-        return this._.convert(tempPkmn => new Pokemon(tempPkmn, moves, abilities));
+        return Object.entries(this._)
+            .reduce(
+                (dict, [id, tempPokemon]) => {
+                    dict[id] = new Pokemon(tempPokemon, moves, abilities)
+                    return dict;
+                }, {}
+            );
     }
 }
 
 class PBS {
     constructor(pbsDict) {
-        this._moves = Mappings.fromCSV("Moves", pbsDict.moves, Move.readFromCsv);
-        this._items = Mappings.fromCSV("Items", pbsDict.items, Item.readFromCsv);
-        this._abilities = Mappings.fromCSV("Abilities", pbsDict.abilities, Ability.readFromCsv);
+        this._moves     = DatabaseBuilder.readCSVMoves(pbsDict.moves);
+        Object.values(this._moves).forEach(move => move['@tooltip'] = getMoveTooltip(move));
+        
+        this._items     = DatabaseBuilder.readCSVItems(pbsDict.items);
+        this._abilities = DatabaseBuilder.readCSVAbilities(pbsDict.abilities);
 
         this._pokemons = PokemonsBuilder.initializeFromIni(pbsDict.pokemon)
-            .addMoves("tms", pbsDict.tm)
+            .addTMMoves(pbsDict.tm)
             .applyEvolutionClosure()
             .getPokemons(this._moves, this._abilities);
     }
