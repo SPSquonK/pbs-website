@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport",content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet",href="https://cdn.jsdelivr.net/npm/bulma@0.9.2/css/bulma.min.css" />
+    <link rel="stylesheet",href="https://cdn.jsdelivr.net/npm/bulma-tooltip@3.0.2/dist/css/bulma-tooltip.min.css" />
+    <title>Pokedex Searcher</title>
+  </head>
+  <body>
+    <section class="section">
+      <div class="container">
+        <h1 class="title">Pokedex Searcher</h1>
+
+        <table class="table is-striped is-hoverable is-bordered" id="vue-app">
+          <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>HP</th>
+            <th>Att</th>
+            <th>Def</th>
+            <th>SpA</th>
+            <th>SpD</th>
+            <th>Spe</th>
+            <th>Ability</th>
+            <th>Moves</th>
+          </tr>
+          <tr v-for="pokemon in pokemons">
+            <td>{{ pokemon.name }}</td>
+            <!-- <td>!{pokemon.types.join("<br />")}</td> -->
+            <!-- <td>#{pokemon.hp}</td> -->
+            <!-- <td>#{pokemon.att}</td> -->
+            <!-- <td>#{pokemon.def}</td> -->
+            <!-- <td>#{pokemon.spa}</td> -->
+            <!-- <td>#{pokemon.spd}</td> -->
+            <!-- <td>#{pokemon.spe}</td> -->
+            <!-- <td>!{pokemon.abilities.map(a => a.name).join("<br />")}</td> -->
+            <!-- <td>#{pokemon.moves.map(m => m.name).join(", ")}</td> -->
+          </tr>
+        </table>
+      </div>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <script
+			  src="https://code.jquery.com/jquery-3.6.0.min.js"
+			  integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+			  crossorigin="anonymous"></script>
+    
+    <script src="main.js"></script>
+  </body>
+</html>
