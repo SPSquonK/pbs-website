@@ -29,21 +29,25 @@ class Pokemon {
 }
 
 class PBS {
-    constructor(pbsDict) {
-        this._moves     = DatabaseBuilder.readCSVMoves(pbsDict.moves);
-        Object.values(this._moves).forEach(move => move['@tooltip'] = getMoveTooltip(move));
+    static fromPBSFiles(pbsDict) {
+        const self = new PBS();
+
+        self._moves     = DatabaseBuilder.readCSVMoves(pbsDict.moves);
+        Object.values(self._moves).forEach(move => move['@tooltip'] = getMoveTooltip(move));
         
-        this._items     = DatabaseBuilder.readCSVItems(pbsDict.items);
-        this._abilities = DatabaseBuilder.readCSVAbilities(pbsDict.abilities);
-        this._pokemons  = Object.entries(DatabaseBuilder.buildPokemonList(pbsDict.pokemon, pbsDict.tm))
+        self._items     = DatabaseBuilder.readCSVItems(pbsDict.items);
+        self._abilities = DatabaseBuilder.readCSVAbilities(pbsDict.abilities);
+        self._pokemons  = Object.entries(DatabaseBuilder.buildPokemonList(pbsDict.pokemon, pbsDict.tm))
             .reduce(
                 (dict, [id, tempPokemon]) => {
-                    dict[id] = new Pokemon(tempPokemon, this._moves, this._abilities)
+                    dict[id] = new Pokemon(tempPokemon, self._moves, self._abilities)
                     return dict;
                 }, {}
             );
+        
+        return self;
     }
-
+    
     getPokedex() { return this._pokemons; }
 }
 

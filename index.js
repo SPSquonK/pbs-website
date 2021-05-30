@@ -35,7 +35,7 @@ function buildPbsReading() {
 }
 
 
-const pbs = new pokemons.PBS(buildPbsReading());
+const pbs = pokemons.PBS.fromPBSFiles(buildPbsReading());
 
 const pokedex = pbs.getPokedex();
 
