@@ -16,13 +16,21 @@ class Database {
             pkmn = pkmn.filter(pokemon => pokemon.evolvesInto.length === 0);
         }
 
-        if (filters.ability !== '(None)') {
+        if (filters.ability !== undefined && filters.ability !== '(None)') {
             pkmn = pkmn.filter(pokemon => pokemon.abilities.find(ab => ab === filters.ability) !== undefined);
+        }
+
+        for (const move of [filters.move1, filters.move2, filters.move3, filters.move4]) {
+            if (move !== undefined && move !== '(None)') {
+                pkmn = pkmn.filter(pokemon =>
+                    pokemon.moves.find(mv => mv === move) !== undefined
+                    || pokemon.moves.indexOf('SKETCH') !== -1
+                );
+            }
         }
 
         pkmn.forEach(pokemon => arrayToFill.push(pokemon));
     }
-
 }
 
 
@@ -90,7 +98,7 @@ Vue.component('list-picker', {
     <div class="field">
       <label class="label">{{ label }}</label>
       <div class="select">
-        <select v-model="selected" v-on:change="$emit('picked', selected)">
+        <select v-model="selected" v-on:change="$emit('input', selected)" class="reseted-by-reset">
           <option value="(None)" selected>
             {{ none }}
           </option>
@@ -107,11 +115,7 @@ Vue.component('list-picker', {
 const data = {
     database: new Database({ moves: {}, abilities: {}, pokemons: {} }),
     pokemons: [],
-    filters: {
-        ability: "(None)"
-
-
-    }
+    filters: {}
 };
 
 const vm = new Vue({
@@ -132,6 +136,16 @@ const vm = new Vue({
 
         print: function(e) {
             console.error(e);
+        },
+
+        reset: function() {
+            document.querySelector(".reseted-by-reset [value=\"(None)\"]").selected = true;
+            this.$data.filters.ability = "(None)";
+            this.$data.filters.move1   = "(None)";
+            this.$data.filters.move2   = "(None)";
+            this.$data.filters.move3   = "(None)";
+            this.$data.filters.move4   = "(None)";
+            this.update();
         }
     }
 });

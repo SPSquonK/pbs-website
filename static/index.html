@@ -19,25 +19,52 @@
               v-bind:elements="database.abilities"
               v-bind:none="'(No ability)'"
               v-bind:label="'Required ability'"
-              v-on:picked="filters.ability = $event, newAbilitySelection()"
+              v-model="filters.ability"
+              v-on:input="newAbilitySelection()"
             ></list-picker>
           </div>
 
           <div class="column">
-            poney
+            <list-picker
+              v-bind:elements="database.moves"
+              v-bind:none="'(No move)'"
+              v-bind:label="'Required move'"
+              v-model="filters.ability"
+              v-on:input="newAbilitySelection()"
+            ></list-picker>
           </div>
           <div class="column">
-            poney
+            <list-picker
+              v-bind:elements="database.moves"
+              v-bind:none="'(No move)'"
+              v-bind:label="'Required move'"
+              v-model="filters.move2"
+              v-on:input="newAbilitySelection()"
+            ></list-picker>
           </div>
           <div class="column">
-            poney
+            <list-picker
+              v-bind:elements="database.moves"
+              v-bind:none="'(No move)'"
+              v-bind:label="'Required move'"
+              v-model="filters.move3"
+              v-on:input="newAbilitySelection()"
+            ></list-picker>
           </div>
           <div class="column">
-            poney
+            <list-picker
+              v-bind:elements="database.moves"
+              v-bind:none="'(No move)'"
+              v-bind:label="'Required move'"
+              v-model="filters.move4"
+              v-on:input="newAbilitySelection()"
+            ></list-picker>
           </div>
         </div>
 
-
+        <div class="control">
+          <button class="button is-primary" v-on:click="reset">Reset</button>
+        </div>
 
         <br />
 
@@ -71,7 +98,16 @@
             <td v-html="pokemon.moves.length + ' move' + ( pokemon.moves.length == 1 ? '' : 's')"></td>
           </tr>
         </table>
+        
+
+          <div class="has-text-right is-small">
+            <p>
+              Pokedex Searcher by <a href="https://squonk.fr">SquonK</a> - s@s.fr <em>but add quonk after both s</em>
+            </p>
+          </div>
+
       </div>
+
     <script
 			  src="https://code.jquery.com/jquery-3.6.0.min.js"
 			  integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
