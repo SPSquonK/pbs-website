@@ -13,14 +13,11 @@ class Database {
         let pkmn = Object.values(this.pokemons);
 
         if (filters.hideNFE) {
-            let first = true;
-            pkmn = pkmn.filter(pokemon => {
-                if (first) console.error(pokemon);
-                first = false;
-                console.error(pokemon.name);
-                console.log(pokemon.evolvesInto);
-                return pokemon.evolvesInto.length === 0;
-            });
+            pkmn = pkmn.filter(pokemon => pokemon.evolvesInto.length === 0);
+        }
+
+        if (filters.ability !== '(None)') {
+            pkmn = pkmn.filter(pokemon => pokemon.abilities.find(ab => ab === filters.ability) !== undefined);
         }
 
         pkmn.forEach(pokemon => arrayToFill.push(pokemon));
@@ -87,7 +84,11 @@ class PBS {
 const data = {
     database: null,
     pokemons: [],
-    filters: {}
+    filters: {
+        ability: "(None)"
+
+
+    }
 };
 
 const vm = new Vue({
@@ -100,6 +101,10 @@ const vm = new Vue({
                 this.$data.pokemons,
                 this.$data.filters
             );
+        },
+
+        newAbilitySelection: function() {
+            this.update();
         }
     }
 });
