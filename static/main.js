@@ -81,8 +81,31 @@ class PBS {
 
 */
 
+
+Vue.component('list-picker', {
+    data: function() { return { selected: '(None)' }; },
+    props: ['elements', 'none', 'label'],
+    template:
+    `
+    <div class="field">
+      <label class="label">{{ label }}</label>
+      <div class="select">
+        <select v-model="selected" v-on:change="$emit('picked', selected)">
+          <option value="(None)" selected>
+            {{ none }}
+          </option>
+          <option v-for="(element, id) in elements" v-bind:value="id">
+            {{ element.name }}
+          </option>
+        </select>
+      </div>
+    </div>
+    `
+});
+
+
 const data = {
-    database: null,
+    database: new Database({ moves: {}, abilities: {}, pokemons: {} }),
     pokemons: [],
     filters: {
         ability: "(None)"
@@ -105,6 +128,10 @@ const vm = new Vue({
 
         newAbilitySelection: function() {
             this.update();
+        },
+
+        print: function(e) {
+            console.error(e);
         }
     }
 });

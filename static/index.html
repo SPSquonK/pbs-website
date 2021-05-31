@@ -15,19 +15,12 @@
 
         <div class="columns">
           <div class="column">
-            <div class="field">
-              <label class="label">Required ability</label>
-              <div class="select">  
-                <select v-model="filters.ability" v-on:change="newAbilitySelection()">
-                  <option value="(None)" selected>
-                    (No ability)
-                  </option>
-                  <option v-for="(ability, id) in database.abilities" v-bind:value="id">
-                    {{ ability.name }}
-                  </option>
-                </select>
-              </div>
-            </div>
+            <list-picker
+              v-bind:elements="database.abilities"
+              v-bind:none="'(No ability)'"
+              v-bind:label="'Required ability'"
+              v-on:picked="filters.ability = $event, newAbilitySelection()"
+            ></list-picker>
           </div>
 
           <div class="column">
