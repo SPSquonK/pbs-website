@@ -1,5 +1,6 @@
 const Papa = require('papaparse');
 const INI = require('ini');
+const fs = require('fs');
 
 function _reduceInDict(dict, object) {
     dict[object['@id']] = object;
@@ -55,7 +56,7 @@ function readINIData(iniContent, entryReader) {
     return Object.entries(INI.parse(iniContent)).map(entryReader).reduce(_reduceInDict, {});
 }
 
-function readPokemon(dexNumber, entries) {
+function readPokemon([dexNumber, entries]) {
     let result = {
         '@id': entries.InternalName,
         name: entries.Name,
@@ -68,7 +69,8 @@ function readPokemon(dexNumber, entries) {
         spa: undefined,
         spd: undefined,
         spe: undefined,
-        evolvesInto: []
+        evolvesInto: [],
+        form: [parseInt(dexNumber), 0]
     };
 
     function addAbility(abilities) {
@@ -181,6 +183,8 @@ class PokemonsBuilder {
     }
 
     addTMMoves(content) {
+        if (content === undefined) return this;
+
         const movesToTeach = PokemonsBuilder.tmContentToTodoList(content);
 
         for (const [pokemonInternalName, moves] of Object.entries(movesToTeach)) {
@@ -223,11 +227,27 @@ class PokemonsBuilder {
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+/** Loads the file at the given path */
+function pbsFilePathToLines(path) {
+    return fs.readFileSync(path, "utf-8")
+        // Remove BOM
+        .replace(/^\uFEFF/, '')
+        // Split
+        .split(/\r?\n/)
+        // Remove empty lines and comments
+        .filter(s => s != '' && !s.startsWith("#"))
+        // As we are using libraries to parse the content, we rebuild an unique
+        // string
+        .join("\n");
+}
 
 module.exports = {
     readCSVMoves: csv => readCSVData(csv, readMove),
     readCSVItems: csv => readCSVData(csv, readItem),
     readCSVAbilities: csv => readCSVData(csv, readAbility),
-    buildPokemonList: (ini, tms) => PokemonsBuilder.make(ini, tms)
+    buildPokemonList: (ini, tms) => PokemonsBuilder.make(ini, tms),
+    pbsFilePathToLines
 };
 

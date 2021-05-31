@@ -3,20 +3,6 @@ const fs = require('fs');
 const DatabaseBuilder = require('./_database-builder.js');
 const stringify = require("json-stringify-pretty-compact");
 
-/** Loads the file at the given path */
-function _pbsFilePathToLines(path) {
-    return fs.readFileSync(path, "utf-8")
-        // Remove BOM
-        .replace(/^\uFEFF/, '')
-        // Split
-        .split(/\r?\n/)
-        // Remove empty lines and comments
-        .filter(s => s != '' && !s.startsWith("#"))
-        // As we are using libraries to parse the content, we rebuild an unique
-        // string
-        .join("\n");
-}
-
 /** Loads  */
 function _buildPbsReading() {
     const listOfFiles = [
@@ -27,7 +13,7 @@ function _buildPbsReading() {
     const result = {};
 
     for (let filename of listOfFiles) {
-        result[filename] = _pbsFilePathToLines(process.env.RESOURCES_PATH + "/" + filename + ".txt");
+        result[filename] = DatabaseBuilder.pbsFilePathToLines(process.env.RESOURCES_PATH + "/" + filename + ".txt");
     }
 
     return result;

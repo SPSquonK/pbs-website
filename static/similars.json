@@ -1,0 +1,33 @@
+{
+    "similar_abilities": [
+        [ "BATTLEARMOR", "SHELLARMOR" ],
+        [ "CLEARBODY", "WHITESMOKE" ],
+        [ "QUEENLYMAJESTY", "DAZZLING" ],
+        [ "FILTER", "SOLIDROCK" ],
+        [ "GOOEY", "TANGLINGHAIR" ],
+        [ "HUGEPOWER", "PUREPOWER" ],
+        [ "INSOMNIA", "VITALSPIRIT" ],
+        [ "PLUS", "MINUS" ],
+        [ "MOLDBREAKER", "TERAVOLT", "TURBOBLAZE" ],
+        [ "MOXIE", "CHILLINGNEIGH" ],
+        [ "HUBRIS", "GRIMNEIGH" ],
+        [ "PROTEAN", "LIBERO" ],
+        [ "RECEIVER", "POWEROFALCHEMY" ],
+        [ "ROUGHSKIN", "IRONBARBS" ],
+        [ "WIMPOUT", "EMERGENCYEXIT" ]
+
+    ],
+    "better_abilities": {
+        "FULLMETALBODY": "CLEARBODY",
+        "PRISMARMOR": "FILTER",
+        "GUTS": "TOXICBOOST",
+        "WHITESMOKE": [ "KEENEYE", "HYPERCUTTER", "BIGPECKS" ],
+        "MAGICGUARD": "ROCKHEAD",
+        "BEASTBOOST": [ "MOXIE", "CHILLINGNEIGH", "GRIMNEIGH" ],
+        "SHADOWSHIELD": "MULTISCALE",
+        "MAGICIAN": "PICKPOCKET",
+        "THICKFAT": "HEATPROOF"
+
+    },
+    "useless_abilities": [ "MULTITYPE", "RKSSYSTEM" ]
+}
