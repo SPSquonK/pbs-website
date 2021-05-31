@@ -52,10 +52,10 @@ function readAbility(csvLine) {
 //  - INI - INI - INI - INI - INI - INI - INI - INI - INI - INI - INI - INI -
 
 function readINIData(iniContent, entryReader) {
-    return Object.values(INI.parse(iniContent)).map(entryReader).reduce(_reduceInDict, {});
+    return Object.entries(INI.parse(iniContent)).map(entryReader).reduce(_reduceInDict, {});
 }
 
-function readPokemon(entries) {
+function readPokemon(dexNumber, entries) {
     let result = {
         '@id': entries.InternalName,
         name: entries.Name,
@@ -81,8 +81,8 @@ function readPokemon(entries) {
     addAbility(entries.Abilities);
     addAbility(entries.HiddenAbility);
 
-    if (entries.Type1 !== 'undefined') result.types.push(entries.Type1);
-    if (entries.Type2 !== 'undefined') result.types.push(entries.Type2);
+    if (entries.Type1 !== undefined) result.types.push(entries.Type1);
+    if (entries.Type2 !== undefined) result.types.push(entries.Type2);
 
     (() => {
         const stats = entries.BaseStats.split(",");
@@ -119,7 +119,7 @@ function readPokemon(entries) {
             .forEach(move => addMove(move, "EggMove"));
     }
 
-    if (entries.Evolution !== undefined && this._entries.Evolutions !== "") {
+    if (entries.Evolutions !== undefined && entries.Evolutions !== "") {
         let s = entries.Evolutions.split(",");
 
         for (let i = 0 ; i < s.length ; i += 3) {
@@ -136,6 +136,7 @@ class PokemonsBuilder {
         return this._pokemons = new PokemonsBuilder(readINIData(ini, readPokemon))
             .addTMMoves(tm)
             .applyEvolutionClosure()
+            .simplifyTMs()
             ._;
     }
 
@@ -195,7 +196,7 @@ class PokemonsBuilder {
             stable = true;
 
             for (const pokemon of Object.values(this._)) {
-                let myMoves = Object.values(pokemon.moves);
+                let myMoves = Object.keys(pokemon.moves);
 
                 for (const evolutionName of pokemon.evolvesInto) {
                     const evolution = this._[evolutionName];
@@ -205,11 +206,18 @@ class PokemonsBuilder {
                             evolution.moves[move] = ["Preevolution"]
                             stable = false;
                         }
-                    })
+                    });
                 }
             }
 
         } while (!stable);
+
+        return this;
+    }
+
+    simplifyTMs() {
+        Object.values(this._)
+            .forEach(pokemon => pokemon.moves = Object.keys(pokemon.moves));
 
         return this;
     }

@@ -2,22 +2,23 @@
 
 This is a website that exposes the content of the PBS files.
 
-It doesn't expose any resource, at the cost of having a lot of server side
-processing.
+## Compile the resources
 
-## Configuration
-
-- Put the PBS files in the resource folder
-    - You don't have the PBS files? Run `pbSaveAllData` in game
-    - You don't have access to the game through RPG Maker XP? Why are you playing
-    it?
 - `npm install`
+- Put the PBS files somewhere (best place being in a resource folder created
+here)
+- run `node compilation\convert-resources.js`
 
-## Run the server
+## Run the website
 
-- `node index.js`
+- Run a server, for example:
+    - `npm install -g http-server`
+    - `http-server` 
+- Go to http://localhost:8000/static/index.html 
+
 
 ## TODO
 
-- Search engine
-- Learn and use modern frameworks (React?)
+- Forms
+- Filters
+- Sort

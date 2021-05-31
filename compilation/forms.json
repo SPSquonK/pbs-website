@@ -1,0 +1,24 @@
+{
+    "ignore_all_forms": [
+        "PICHU",
+        "UNOWN",
+        "SHELLOS", "GASTRODON",
+        "BASCULIN",
+        "DEERLING", "SAWSBUCK",
+        "KELDEO",
+        "GENESECT",
+        "XERNEAS"
+    ],
+    "ignore_specific_forms": {
+        "MINIOR": [2,3,4,5,6, 8,9,10,11,12,13]
+    },
+    "change_forms": {
+        "ROTOM-1": { "add_move": "OVERHEAT" },
+        "ROTOM-2": { "add_move": "HYDROPUMP" },
+        "ROTOM-3": { "add_move": "BLIZZARD" },
+        "ROTOM-4": { "add_move": "AIRSLASH" },
+        "ROTOM-5": { "add_move": "LEAFSTORM" }
+
+
+    }
+}
