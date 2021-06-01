@@ -13,7 +13,11 @@ function _buildPbsReading() {
     const result = {};
 
     for (let filename of listOfFiles) {
-        result[filename] = DatabaseBuilder.pbsFilePathToLines(process.env.RESOURCES_PATH + "/" + filename + ".txt");
+        try {
+            result[filename] = DatabaseBuilder.pbsFilePathToLines(process.env.RESOURCES_PATH + "/" + filename + ".txt");
+        } catch (e) {
+            result[filename] = undefined;
+        }
     }
 
     return result;

@@ -13,6 +13,8 @@ function _reduceInDict(dict, object) {
 function readCSVData(csvContent, lineReader) {
     const parsingResult = Papa.parse(csvContent);
 
+    parsingResult.errors = parsingResult.errors.filter(e => e.type !== 'Quotes');
+
     if (parsingResult.errors.length !== 0) {
         console.error(parsingResult.errors);
         throw Error("Failed csv content to mapping");
@@ -188,6 +190,8 @@ class PokemonsBuilder {
         const movesToTeach = PokemonsBuilder.tmContentToTodoList(content);
 
         for (const [pokemonInternalName, moves] of Object.entries(movesToTeach)) {
+            if (this._[pokemonInternalName] === undefined)
+                continue;
             moves.forEach(move => PokemonsBuilder.teachMove(this._[pokemonInternalName], move, "TM"));
         }
 

@@ -134,10 +134,6 @@ const vm = new Vue({
             this.update();
         },
 
-        print: function(e) {
-            console.error(e);
-        },
-
         reset: function() {
             document.querySelector(".reseted-by-reset [value=\"(None)\"]").selected = true;
             this.$data.filters.ability = "(None)";
