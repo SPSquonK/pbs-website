@@ -15,7 +15,6 @@
         [ "RECEIVER", "POWEROFALCHEMY" ],
         [ "ROUGHSKIN", "IRONBARBS" ],
         [ "WIMPOUT", "EMERGENCYEXIT" ]
-
     ],
     "better_abilities": {
         "FULLMETALBODY": "CLEARBODY",
@@ -27,7 +26,5 @@
         "SHADOWSHIELD": "MULTISCALE",
         "MAGICIAN": "PICKPOCKET",
         "THICKFAT": "HEATPROOF"
-
-    },
-    "useless_abilities": [ "MULTITYPE", "RKSSYSTEM" ]
+    }
 }

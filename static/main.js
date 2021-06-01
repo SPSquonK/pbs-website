@@ -1,10 +1,57 @@
+/**
+ * @param {string[]} array1 
+ * @param {string[]} array2 
+ */
+function findOneCommonElement(array1, array2) {
+    return array1.find(e1 => array2.indexOf(e1) !== -1);
+}
+
 class Database {
     constructor(fullJson) {
         this.moves = fullJson.moves;
         this.abilities = fullJson.abilities;
         this.pokemons = fullJson.pokemons;
+        this.similarAbilities = {};
 
         Object.values(fullJson).forEach(o => Object.freeze(o));
+    }
+
+    loadSimilar(similars) {
+        const add = (baseAbility, similarAbility) => {
+            if (this.similarAbilities[baseAbility] === undefined) {
+                this.similarAbilities[baseAbility] = [];
+            }
+
+            this.similarAbilities[baseAbility].push(similarAbility);
+        };
+
+        for (const equivalenceClass of similars.similar_abilities) {
+            console.error(equivalenceClass)
+            for (let i = 0 ; i < equivalenceClass.length ; ++i) {
+                for (let j = i + 1 ; j < equivalenceClass.length ; ++j) {
+                    add(equivalenceClass[i], equivalenceClass[j]);
+                    add(equivalenceClass[j], equivalenceClass[i]);
+                }
+            }
+        }
+
+        let addSuperior = (superiorClass, element) => {
+            add(element, superiorClass);
+    
+            for (const equivalent of this.similarAbilities[element]) {
+                add(equivalent, superiorClass);
+            }
+        }
+
+        for (const [superiorClass, elements] of Object.entries(similars.better_abilities)) {
+            if (typeof elements === 'string') {
+                addSuperior(superiorClass, elements);
+            } else {
+                for (const element of elements) {
+                    addSuperior(superiorClass, element);
+                }
+            }
+        }
     }
 
     fill(arrayToFill, filters) {
@@ -17,7 +64,14 @@ class Database {
         }
 
         if (filters.ability !== undefined && filters.ability !== '(None)') {
-            pkmn = pkmn.filter(pokemon => pokemon.abilities.find(ab => ab === filters.ability) !== undefined);
+            let searchedAbilities = [filters.ability];
+            let equivalent = this.similarAbilities[filters.ability];
+            
+            if (equivalent !== undefined) {
+                searchedAbilities.push(...equivalent);
+            }
+
+            pkmn = pkmn.filter(pokemon => findOneCommonElement(pokemon.abilities, searchedAbilities) !== undefined);
         }
 
         for (const move of [filters.move1, filters.move2, filters.move3, filters.move4]) {
@@ -146,13 +200,24 @@ const vm = new Vue({
     }
 });
 
-$.ajax({
-        url: "content.json",
-        method: "GET",
-        dataType: "json",
-        success: function(jsonData) {
-            vm.$data.database = new Database(jsonData);
-            vm.update();
-        }
-    }
-)
+
+(() => {
+    const content = $.ajax({
+        url: 'content.json',
+        method: 'GET',
+        dataType: 'json'
+    });
+
+    const similars = $.ajax({
+        url: 'similars.json',
+        method: 'GET',
+        dataType: 'json'
+    });
+
+    $.when(content, similars).done((content, similars) => {
+        vm.$data.database = new Database(content[0]);
+        vm.$data.database.loadSimilar(similars[0]);
+        vm.update();
+    });
+})();
+
