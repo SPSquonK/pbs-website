@@ -1,6 +1,7 @@
 require('dotenv').config();
 const fs = require('fs');
 const DatabaseBuilder = require('./_database-builder.js');
+const SpritesheetBuilder = require('./_spritesheet-builder.js');
 const stringify = require("json-stringify-pretty-compact");
 
 /** Loads  */
@@ -39,9 +40,53 @@ function readPBS() {
     content.abilities = DatabaseBuilder.readCSVAbilities(pbsDict.abilities);
     content.pokemons  = DatabaseBuilder.buildPokemonList(pbsDict.pokemon, pbsDict.tm, pbsDict.pokemonforms, pbsDict.directives);
 
-    if (pbsDict.directives !== undefined) {
-        content.icons = pbsDict.directives.icons;
+    {
+        function findIcon(pokemon) {
+            const path = process.env.ICONS_PATH + "/icon";
+
+            let candidates = [];
+
+            if (pokemon['@form'] !== 0) {
+                candidates.push(path + ("" + pokemon['dexNumber']).padStart(3, "0") + "_" + pokemon['@form'] + ".png");
+            }
+
+            candidates.push(path + ("" + pokemon['dexNumber']).padStart(3, "0") + ".png");
+            candidates.push(path + "icon000.png");
+
+            for (const candidate of candidates) {
+                try {
+                    if (fs.existsSync(candidate)) {
+                        return candidate;
+                    }
+                } catch (err) {}
+            }
+
+            return undefined;
+        }
+
+        const requests = {};
+        let lastIndex = 0;
+
+        for (const [_key, pokemon] of Object.entries(content.pokemons)) {
+            const imageCandidate = findIcon(pokemon);
+
+            if (imageCandidate !== undefined) {
+                if (requests[imageCandidate] !== undefined) {
+                    pokemon.iconNumber = requests[imageCandidate];
+                } else {
+                    requests[imageCandidate] = lastIndex;
+                    pokemon.iconNumber = lastIndex;
+                    ++lastIndex;
+                }
+            }
+        }
+
+        if (requests.length !== 0) {
+            SpritesheetBuilder(Object.keys(requests));
+            content.icons = true;
+        }
     }
+
 
     return content;
 }

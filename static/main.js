@@ -26,7 +26,6 @@ class Database {
         };
 
         for (const equivalenceClass of similars.similar_abilities) {
-            console.error(equivalenceClass)
             for (let i = 0 ; i < equivalenceClass.length ; ++i) {
                 for (let j = i + 1 ; j < equivalenceClass.length ; ++j) {
                     add(equivalenceClass[i], equivalenceClass[j]);
@@ -198,16 +197,13 @@ const vm = new Vue({
             this.update();
         },
         
-        getIconPath: function(icons, pokemon) {
-            let s = "" + pokemon.dexNumber;
-            while (s.length < 3)
-                s = "0" + s;
+        selectSprite: function(position) {
+            let cssProp = 'background: url("sprites.png") no-repeat; display: inline-block; width: 64px; height: 64px; ';
+            
+            let xOffset = -          (position % 12) * 64;
+            let yOffset = -Math.floor(position / 12) * 64;
 
-            s = icons + "icon" + s;
-            if (pokemon.form !== 0) {
-                s += "_" + pokemon.form;
-            }
-            return s + ".png";
+            return cssProp + `background-position: ${xOffset}px ${yOffset}px;`;
         }
     }
 });

@@ -87,7 +87,7 @@
             <th>Moves</th>
           </tr>
           <tr v-for="pokemon in pokemons">
-            <td v-if="$data.icons"><img v-bind:src="getIconPath($data.icons, pokemon)" /></td>
+            <td v-if="$data.icons"><span v-bind:style="selectSprite(pokemon.iconNumber)" /></td>
             <td>{{ pokemon.name }}</td>
             <td v-html="pokemon.types.join('<br />')"></td>
             <td>{{ pokemon.hp  }}</td>
