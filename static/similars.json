@@ -14,7 +14,8 @@
         [ "PROTEAN", "LIBERO" ],
         [ "RECEIVER", "POWEROFALCHEMY" ],
         [ "ROUGHSKIN", "IRONBARBS" ],
-        [ "WIMPOUT", "EMERGENCYEXIT" ]
+        [ "WIMPOUT", "EMERGENCYEXIT" ],
+        [ "AIRLOCK", "CLOUDNINE"]
     ],
     "better_abilities": {
         "FULLMETALBODY": "CLEARBODY",

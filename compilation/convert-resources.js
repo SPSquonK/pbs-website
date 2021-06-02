@@ -31,7 +31,7 @@ function readPBS() {
     content.moves     = DatabaseBuilder.readCSVMoves(pbsDict.moves);    
     content.items     = DatabaseBuilder.readCSVItems(pbsDict.items);
     content.abilities = DatabaseBuilder.readCSVAbilities(pbsDict.abilities);
-    content.pokemons  = DatabaseBuilder.buildPokemonList(pbsDict.pokemon, pbsDict.tm);
+    content.pokemons  = DatabaseBuilder.buildPokemonList(pbsDict.pokemon, pbsDict.tm, pbsDict.pokemonforms);
 
     return content;
 }

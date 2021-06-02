@@ -54,13 +54,57 @@ function readAbility(csvLine) {
 ////////////////////////////////////////////////////////////////////////////////
 //  - INI - INI - INI - INI - INI - INI - INI - INI - INI - INI - INI - INI -
 
-function readINIData(iniContent, entryReader) {
-    return Object.entries(INI.parse(iniContent)).map(entryReader).reduce(_reduceInDict, {});
+
+function readPokemons(pokemonIniContent, formAlterations) {
+    const result = {};
+
+    const parsed = INI.parse(pokemonIniContent);
+    for (const [dexNumber, entries] of Object.entries(parsed)) {
+        const pkmn = readPokemon(entries, parseInt(dexNumber));
+        result[pkmn['@id']] = pkmn;
+
+        const alternates = formAlterations[pkmn['@id']];
+        if (alternates !== undefined) {
+
+            for (const alternate of alternates) {
+                let cpy = JSON.parse(JSON.stringify(entries));
+
+                for (const [key, value] of Object.entries(alternate)) {
+                    cpy[key] = value;
+                }
+
+                if (alternate.Type1 !== undefined || alternate.Type2 !== undefined) {
+                    cpy.Type1 = alternate.Type1;
+                    cpy.Type2 = alternate.Type2;
+                }
+
+                if (alternate.Abilities !== undefined || alternate.HiddenAbility !== undefined) {
+                    cpy.Abilities = alternate.Abilities;
+                    cpy.HiddenAbility = alternate.HiddenAbility;
+                }
+
+                if (alternate.FormName !== undefined) {
+                    if (alternate.FormName.includes(cpy.Name)) {
+                        cpy.Name = alternate.FormName
+                    } else {
+                        cpy.Name = cpy.Name + " " + alternate.FormName;
+                    }
+                }
+
+                const pkmnForm = readPokemon(cpy, parseInt(dexNumber));
+                result[pkmnForm['@id'] + "-" + pkmnForm['@form']] = pkmnForm;
+            }
+        }
+    }
+
+    return result;
 }
 
-function readPokemon([dexNumber, entries]) {
+function readPokemon(entries, dexNumber) {
     let result = {
         '@id': entries.InternalName,
+        '@dexId': dexNumber,
+        '@form': entries['@form'] === undefined ? 0 : entries['@form'],
         name: entries.Name,
         types: [],
         moves: {},
@@ -71,8 +115,7 @@ function readPokemon([dexNumber, entries]) {
         spa: undefined,
         spd: undefined,
         spe: undefined,
-        evolvesInto: [],
-        form: [parseInt(dexNumber), 0]
+        evolvesInto: []
     };
 
     function addAbility(abilities) {
@@ -136,8 +179,10 @@ function readPokemon([dexNumber, entries]) {
 
 
 class PokemonsBuilder {
-    static make(ini, tm) {
-        return this._pokemons = new PokemonsBuilder(readINIData(ini, readPokemon))
+    static make(ini, tm, forms) {
+        const parsedForms = PokemonsBuilder.parseForms(forms);
+
+        return this._pokemons = new PokemonsBuilder(readPokemons(ini, parsedForms))
             .addTMMoves(tm)
             .applyEvolutionClosure()
             .simplifyTMs()
@@ -146,6 +191,28 @@ class PokemonsBuilder {
 
     constructor(initialSet) {
         this._ = initialSet;
+    }
+
+    static parseForms(forms) {
+        if (forms === undefined) return {};
+
+        const parsedForms = INI.parse(forms);
+
+        const result = {};
+        for (const [specieFormId, entry] of Object.entries(parsedForms)) {
+            const [internalName, formIdStr] = specieFormId.split('-');
+
+            entry['@id'] = internalName;
+            entry['@form'] = parseInt(formIdStr);
+
+            if (result[internalName] === undefined) {
+                result[internalName] = [];
+            }
+
+            result[internalName].push(entry);
+        }
+
+        return result;
     }
 
     static tmContentToTodoList(tmContent) {
@@ -251,7 +318,7 @@ module.exports = {
     readCSVMoves: csv => readCSVData(csv, readMove),
     readCSVItems: csv => readCSVData(csv, readItem),
     readCSVAbilities: csv => readCSVData(csv, readAbility),
-    buildPokemonList: (ini, tms) => PokemonsBuilder.make(ini, tms),
+    buildPokemonList: (ini, tms, forms) => PokemonsBuilder.make(ini, tms, forms),
     pbsFilePathToLines
 };
 
