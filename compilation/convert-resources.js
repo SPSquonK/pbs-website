@@ -20,6 +20,12 @@ function _buildPbsReading() {
         }
     }
 
+    try {
+        result.directives = JSON.parse(fs.readFileSync(process.env.RESOURCES_PATH + "/directives.json", "utf-8"));
+    } catch (e) {
+        result.directives = undefined;
+    }
+
     return result;
 }
 
@@ -31,7 +37,11 @@ function readPBS() {
     content.moves     = DatabaseBuilder.readCSVMoves(pbsDict.moves);    
     content.items     = DatabaseBuilder.readCSVItems(pbsDict.items);
     content.abilities = DatabaseBuilder.readCSVAbilities(pbsDict.abilities);
-    content.pokemons  = DatabaseBuilder.buildPokemonList(pbsDict.pokemon, pbsDict.tm, pbsDict.pokemonforms);
+    content.pokemons  = DatabaseBuilder.buildPokemonList(pbsDict.pokemon, pbsDict.tm, pbsDict.pokemonforms, pbsDict.directives);
+
+    if (pbsDict.directives !== undefined) {
+        content.icons = pbsDict.directives.icons;
+    }
 
     return content;
 }

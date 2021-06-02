@@ -118,6 +118,9 @@ function readPokemon(entries, dexNumber) {
         evolvesInto: []
     };
 
+    result.dexNumber = result['@dexId'];
+    result.form = result['@form'];
+
     function addAbility(abilities) {
         if (abilities === undefined) return;
         abilities.split(",")

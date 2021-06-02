@@ -74,6 +74,7 @@
 
         <table class="table is-striped is-hoverable is-bordered">
           <tr>
+            <th v-if="$data.icons">Icon</th>
             <th>Name</th>
             <th>Type</th>
             <th>HP</th>
@@ -86,6 +87,7 @@
             <th>Moves</th>
           </tr>
           <tr v-for="pokemon in pokemons">
+            <td v-if="$data.icons"><img v-bind:src="getIconPath($data.icons, pokemon)" /></td>
             <td>{{ pokemon.name }}</td>
             <td v-html="pokemon.types.join('<br />')"></td>
             <td>{{ pokemon.hp  }}</td>
@@ -103,6 +105,7 @@
           <div class="has-text-right is-small">
             <p>
               Pokedex Searcher by <a href="https://squonk.fr">SquonK</a> - s@s.fr <em>but add quonk after both s</em>
+              <br /><a href="https://github.com/SPSquonK/pbs-website">Github repository</a>
             </p>
           </div>
 

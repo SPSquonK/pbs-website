@@ -196,6 +196,18 @@ const vm = new Vue({
             this.$data.filters.move3   = "(None)";
             this.$data.filters.move4   = "(None)";
             this.update();
+        },
+        
+        getIconPath: function(icons, pokemon) {
+            let s = "" + pokemon.dexNumber;
+            while (s.length < 3)
+                s = "0" + s;
+
+            s = icons + "icon" + s;
+            if (pokemon.form !== 0) {
+                s += "_" + pokemon.form;
+            }
+            return s + ".png";
         }
     }
 });
@@ -217,7 +229,7 @@ const vm = new Vue({
     $.when(content, similars).done((content, similars) => {
         vm.$data.database = new Database(content[0]);
         vm.$data.database.loadSimilar(similars[0]);
+        vm.$data.icons = content[0].icons;
         vm.update();
     });
 })();
-
